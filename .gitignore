@@ -1,0 +1,4 @@
+/data/
+**/*.csv
+**/*.log
+**/__pycache__
