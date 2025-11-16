@@ -1,6 +1,6 @@
 {
-  "sample_interval": [4],
-  "neighbors_count": [8],
+  "sample_interval": [2,4,6,8,10,12,14,16],
+  "neighbors_count": [4,6,8,10,12,14,16],
   "use_volatility": [0, 1],
   "regime_threshold": [-0.5, -0.4, -0.3, -0.2, -0.1, 0, 0.1, 0.2, 0.3, 0.4, 0.5],
   "adx_threshold": [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25],

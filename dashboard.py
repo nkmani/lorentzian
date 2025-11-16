@@ -1,13 +1,21 @@
 from classifier.lsd import *
+from classifier.settings import *
 import argparse
+import glob
+import os
 
 import dash_bootstrap_components as dbc
 from dash import Dash, html, dcc, callback, Output, Input
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
-from common import get_data, get_session_data, get_session_times_from_date_time
+from common.functions import get_data, get_session_data, get_session_times_from_date_time, getLogger
 
+base_path = "c:/dev/data/mes/2025-11-15"
+files = glob.glob(f"{base_path}/*.csv")
+options = [os.path.basename(file) for file in files]
+
+logger = getLogger()
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.layout = html.Div(
@@ -21,14 +29,14 @@ app.layout = html.Div(
                         dbc.Col(html.H1("Lorentzian Indicator"), width=4),
                         dbc.Col(width=8, children=[
                             dbc.Row([
-                                dbc.Col(children=[dcc.Dropdown(['2025-10-24'], '2025-10-24', id='dropdown-selection')], width=4),
+                                dbc.Col(children=[dcc.Dropdown(options, options[0], id='dropdown-selection')], width=4),
                                 dbc.Col([
                                     html.Label("Start Time: "),
                                     dbc.Input(id="start-time", value="11:30"),
                                 ], width=4),
                                 dbc.Col([
                                     html.Label("End Time: "),
-                                    dbc.Input(id="end-time", value="18:30"),
+                                    dbc.Input(id="end-time", value="20:30"),
                                 ], width=4),
                             ])
                         ])
@@ -49,7 +57,9 @@ app.layout = html.Div(
 
 
 def run_analysis(df) -> pd.DataFrame:
-    lc = LorentzianSpaceDistanceIndictor(df)
+    settings = default_settings()
+    settings.init(df)
+    lc = LorentzianSpaceDistanceIndictor(df, settings)
     return lc.lsd()
 
 
@@ -59,12 +69,16 @@ def run_analysis(df) -> pd.DataFrame:
     Input('start-time', 'value'),
     Input('end-time', 'value'),
 )
-def update_graph(date, start_time, end_time):
-    csv_path = 'data/' + date + '.csv'
+def update_graph(file, start_time, end_time):
+    # csv_path = 'data/' + date + '.csv'
+    csv_path = f"{base_path}/{file}"
     df = run_analysis(get_data(csv_path))
 
-    start_dt, end_dt = get_session_times_from_date_time('2025-10-24', start_time, end_time)
+    start_dt, end_dt = get_session_times_from_date_time('2025-11-15', start_time, end_time)
     df = get_session_data(df, start_dt, end_dt)
+
+    buy_or_sell = df[(df['start_long_trade'].notna() | df['start_short_trade'].notna())]
+    print(buy_or_sell)
 
     fig = make_subplots(rows=1, cols=1, shared_xaxes=True, vertical_spacing=0.02)
     fig.add_candlestick(x=df['ts_date'], open=df['open'], high=df['high'], low=df['low'], close=df['close'], row=1, col=1)

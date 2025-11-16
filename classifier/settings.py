@@ -6,7 +6,7 @@ import itertools
 from typing import List
 from enum import IntEnum
 from .features import n_rsi, n_cci, n_wt, n_adx, n_stoch
-from constants import *
+from common.constants import *
 
 # Label Object: Used for classifying historical data as training data for the ML Model
 class Direction(IntEnum):
@@ -291,3 +291,11 @@ def default_settings() -> Settings:
         trade_commission=0.8,
         feature_list=default_features(),
     )
+
+def generate_settings(settings_file: str) -> Settings:
+    settings = default_settings()
+    with open(settings_file, "r") as f:
+        overrides = json.load(f)
+        for key, value in overrides.items():
+            setattr(settings, key, value)
+    return settings

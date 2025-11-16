@@ -3,16 +3,25 @@ import csv
 import glob
 import operator
 import os
+import sys
+import math
 
-from classifier.lsd import *
-from common import *
+import pandas as pd
+from classifier.settings import *
+
+# current_dir = os.path.dirname(os.path.abspath(__file__))
+# parent_dir = os.path.dirname(current_dir)
+# sys.path.insert(0, parent_dir)
+
+from common.functions import *
 
 from ta.volatility import average_true_range as atr
 
 import time
 
-logger = logging.getLogger('simulate')
+from indicators.lorentzian import Lorentzian
 
+logger = getLogger()
 
 class Stats:
     symbol: str
@@ -40,7 +49,7 @@ class Stats:
         # return s
 
     def update(self, profit, win_trades, loss_trades, settings):
-        result = [self.symbol, self.date, profit, win_trades, loss_trades, str(settings.get_changed_settings())]
+        result = [self.symbol, self.date, f"{profit:.2f}", win_trades, loss_trades, str(settings.get_changed_settings())]
         self.results.append(result)
         self.iterations += 1
         if profit > self.profit:
@@ -72,7 +81,7 @@ class Stats:
             writer.writerows(self.results)
 
 class AggStats:
-    records: List
+    records: list
 
     def __init__(self):
         self.records = []
@@ -114,8 +123,12 @@ class AggStats:
 
 def simulate(df: pd.DataFrame, settings: Settings):
     settings.init(df)
-    lc = LorentzianSpaceDistanceIndictor(df, settings)
-    lc_df = lc.lsd()
+    # lc = LorentzianSpaceDistanceIndictor(df, settings)
+    # lc_df = lc.lsd()
+
+    lc = Lorentzian({'settings': settings}, df)
+    signal, _ = lc.process()
+    lc_df = lc.df
 
     lc_df['shifted_open'] = lc_df['open'].shift(-1)
 
@@ -212,7 +225,7 @@ def simulate(df: pd.DataFrame, settings: Settings):
         net_profit = profit * point_value - trade_commission * num_trades
     else:
         win_rate = 0
-    logger.debug(f"Profit: {net_profit:.2f} Points: {profit} Number of trades: {num_trades} Win Trades: {win_trades} Loss trades: {loss_trades} Win Rate: {win_rate:.2f}")
+    logger.debug(f"Profit: {net_profit:.2f} Points: {profit:.2f} Number of trades: {num_trades} Win Trades: {win_trades} Loss trades: {loss_trades} Win Rate: {win_rate:.2f}")
     return net_profit, win_trades, loss_trades
 
 

@@ -188,7 +188,8 @@ def generate_signals(settings: Settings, df: pd.DataFrame) -> pd.DataFrame:
     prediction = df['predictions']
     signal = np.where(((prediction > 0) & filter_all), Direction.LONG, np.where(((prediction < 0) & filter_all), Direction.SHORT, None))
     signal[0] = (0 if signal[0] is None else signal[0])
-    for i in np.where(signal is None)[0]: signal[i] = signal[i - 1 if i >= 1 else 0]
+    for i in np.where(signal is None)[0]:
+        signal[i] = signal[i - 1 if i >= 1 else 0]
 
     change = lambda ser, idx: (shift(ser, idx, fill_value=ser[0]) != shift(ser, idx + 1, fill_value=ser[0]))
 
@@ -269,5 +270,6 @@ def generate_signals(settings: Settings, df: pd.DataFrame) -> pd.DataFrame:
     df["end_short_trade"] = np.where(end_short_trade, df['low'], np.nan)
     df["end_long_trade_strict"] = np.where(end_long_trade_strict, df['high'], np.nan)
     df["end_short_trade_strict"] = np.where(end_short_trade_strict, df['low'], np.nan)
+    df["signal"] = signal
 
     return df

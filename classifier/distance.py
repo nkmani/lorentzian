@@ -3,7 +3,7 @@ from abc import abstractmethod, ABCMeta
 import numpy as np
 import math
 from .settings import Settings, Direction
-from constants import *
+from common.constants import *
 
 
 class Distances(metaclass=ABCMeta):
@@ -77,8 +77,9 @@ def get_lorentzian_predictions(settings: Settings):
                     distances.pop(0)
                     predictions.pop(0)
                     neighbors.pop(0)
-        with open("v2.log", "a") as f:
-            f.write(f"bar_index: {bar_index}, distances: {distances}, neighbors: {neighbors}\n")
+        if settings.debug_flags & DUMP_DISTANCE_DATA:
+            with open("v2.log", "a") as f:
+                f.write(f"bar_index: {bar_index}, distances: {distances}, neighbors: {neighbors}\n")
         return sum(predictions)
 
     def get_lorentzian_prediction_v1():

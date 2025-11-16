@@ -1,0 +1,48 @@
+{
+  "session": {
+    "start": "23:00:00",
+    "end": "22:00:00"
+  },
+
+  "log": {
+    "format": "%(asctime)s|%(levelname)s|%(process)d|%(thread)d|%(funcName)s|%(lineno)d|%(name)s|%(message)s",
+    "level": "debug"
+  },
+
+  "data": {
+    "source": "sc",
+
+    "symbol": "mes",
+    "schema": "ohlcv",
+    "freqs": ["15s","1min","4min"],
+    "data_freq": "1min",
+    "wait": 0.250,
+
+    "shm_enabled": true,
+    "shm_name": "yats-sc-data",
+    "shm_size": 4196
+  },
+
+  "signal": {
+    "shm_enabled": true,
+    "shm_name" : "yats-signal",
+    "shm_size": 4196,
+
+    "study": {
+      "name": "lc-1min",
+
+      "signal_freq": "1min",
+
+      "indicators": {
+        "ADX": {"params": {"window":  14}, "enabled": 0},
+        "ATR": {"params": {"window":  4}, "enabled": 1},
+        "ROC": {"params": {"window":  1}, "enabled":  1},
+        "REGIME": {"params": {"window": 200}, "enabled": 0},
+        "KAMA": {"params": {"window":  10, "pow1":  2, "pow2":  30}, "enabled": 1},
+        "KAMA_ROC": {"params": {"window":  2}, "enabled": 1},
+        "KAMA_TREND": {"params": {"pow1":  0.002}, "enabled": 1},
+        "LORENTZIAN": {"settings": {}, "enabled":  1, "settings_file": "", "signaling":  1}
+      }
+    }
+  }
+}
