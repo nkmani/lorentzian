@@ -5,6 +5,8 @@ import operator
 import os
 import sys
 import math
+import threading
+import queue
 
 import pandas as pd
 from classifier.settings import *
@@ -30,6 +32,7 @@ class Stats:
     win_trades: int
     loss_trades: int
     iterations: int
+    lock: threading.Lock
 
     def __init__(self, **kwargs):
         self.changed_settings = None
@@ -40,6 +43,7 @@ class Stats:
         self.win_trades = 0
         self.loss_trades = 0
         self.results = []
+        self.lock = threading.Lock()
 
     def __str__(self):
         return f"symbol: {self.symbol} date: {self.date} profit: {self.profit:.2f} win_trades: {self.win_trades} loss_trades: {self.loss_trades} iterations: {self.iterations} changed_settings: {self.changed_settings}"
@@ -48,7 +52,8 @@ class Stats:
         #         s += f"{attr}: {value} "
         # return s
 
-    def update(self, profit, win_trades, loss_trades, settings: Settings):
+    def update(self, profit, win_trades, loss_trades, settings):
+        self.lock.acquire()
         result = [self.symbol, self.date, f"{profit:.2f}", win_trades, loss_trades, str(settings.get_changed_settings())]
         self.results.append(result)
         self.iterations += 1
@@ -58,6 +63,7 @@ class Stats:
             self.loss_trades = loss_trades
             self.changed_settings = settings.get_changed_settings()
         logger.debug(f"{str(result)} iteration={self.iterations}")
+        self.lock.release()
 
     def top_n_a(self, n: int):
         sorted_results = sorted(self.results, key=operator.itemgetter(2), reverse=True)
@@ -123,9 +129,6 @@ class AggStats:
 
 def simulate(df: pd.DataFrame, settings: Settings):
     settings.init(df)
-    # lc = LorentzianSpaceDistanceIndictor(df, settings)
-    # lc_df = lc.lsd()
-
     lc = Lorentzian({'settings': settings})
     signal, _ = lc.process(df)
     lc_df = lc.df
@@ -228,8 +231,23 @@ def simulate(df: pd.DataFrame, settings: Settings):
     logger.debug(f"Profit: {net_profit:.2f} Points: {profit:.2f} Number of trades: {num_trades} Win Trades: {win_trades} Loss trades: {loss_trades} Win Rate: {win_rate:.2f}")
     return net_profit, win_trades, loss_trades
 
+def worker(q):
+    while True:
+        try:
+            item = q.get()
+            if item is None:
+                break
+            df = item["df"]
+            settings = item["settings"]
+            stats = item["stats"]
+            msg = f"{len(df)} records with {settings.get_changed_settings()}"
+            logger.info(f"Processing: {msg} by thread {threading.current_thread().name}" )
+            profit, win_trades, loss_trades = simulate(df, settings)
+            stats.update(profit, win_trades, loss_trades, settings)
+        finally:
+            q.task_done()
 
-def grid_search_optimal_settings(symbol: str, data_file: str, config_file: str, result_file: str) -> Stats | None:
+def grid_search_optimal_settings(symbol: str, data_file: str, config_file: str, result_file: str, num_threads: int = 1) -> Stats | None:
     df = get_data(data_file)
     if len(df) < 1200:
         logger.warning(f"Not enough data found for {data_file} - length: {len(df)}")
@@ -246,9 +264,23 @@ def grid_search_optimal_settings(symbol: str, data_file: str, config_file: str, 
 
     df['atr'] = atr(df['high'], df['low'], df['close'], window=7)
 
+    q = queue.Queue()
     for settings in settings_iterator:
-        profit, win_trades, loss_trades = simulate(df, settings)
-        stats.update(profit, win_trades, loss_trades, settings)
+        q.put({"df": df, "settings": settings, "stats": stats})
+
+    threads = []
+    for i in range(num_threads):
+        thread = threading.Thread(target=worker, args=(q,))
+        threads.append(thread)
+        thread.start()
+
+    q.join()
+
+    for _ in range(num_threads):
+        q.put(None)
+    for thread in threads:
+        thread.join()  # Wait for threads to finish
+    logger.info("All tasks completed and threads terminated.")
 
     if result_file:
         stats.dump_stats(result_file)
@@ -282,7 +314,7 @@ def run(args):
         folders = glob.glob(os.path.join(args.folder, "20*"))
         folders.sort()
         for folder in folders:
-            files = glob.glob(os.path.join(folder, "*-1min.csv"))
+            files = glob.glob(os.path.join(folder, "*.csv"))
             for file in files:
                 stats = grid_search_optimal_settings(args.symbol, file, args.config_file, args.result_file)
                 if stats is not None:
@@ -304,4 +336,5 @@ if __name__ == '__main__':
     parser.add_argument("-s", "--symbol", help="3 letter symbol name", type=str, required=True)
     parser.add_argument("-v", "--verbose", help="verbose output", action="store_true", default=False)
     parser.add_argument("-c", "--config-file", help="config file", type=str)
+    parser.add_argument("-t", "--thread-count", help="no of threads", type=int, default=1)
     run(parser.parse_args())
