@@ -6,7 +6,6 @@ import itertools
 from typing import List
 from enum import IntEnum
 from .features import n_rsi, n_cci, n_wt, n_adx, n_stoch
-from common.constants import *
 
 # Label Object: Used for classifying historical data as training data for the ML Model
 class Direction(IntEnum):

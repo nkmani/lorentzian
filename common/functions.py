@@ -176,7 +176,7 @@ def setup_data_shm_and_lock(_config: dict) -> None:
         logger.debug(f"Data shared memory {_shm_name} size {_shm_size} setup complete")
 
 
-def getLogger():
+def get_logger():
     return logging.getLogger()
 
 def setup_signal_shm_and_lock(_config: dict, _study: str) -> None:

@@ -9,13 +9,13 @@ from dash import Dash, html, dcc, callback, Output, Input
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
-from common.functions import get_data, get_session_data, get_session_times_from_date_time, getLogger
+from common.functions import get_data, get_session_data, get_session_times_from_date_time, get_logger
 
 base_path = "c:/dev/data/mes/2025-11-15"
 files = glob.glob(f"{base_path}/*.csv")
 options = [os.path.basename(file) for file in files]
 
-logger = getLogger()
+logger = get_logger()
 
 app = Dash(__name__, external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.layout = html.Div(

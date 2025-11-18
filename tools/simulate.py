@@ -21,7 +21,7 @@ import time
 
 from indicators.lorentzian import Lorentzian
 
-logger = getLogger()
+logger = get_logger()
 
 class Stats:
     symbol: str
@@ -48,7 +48,7 @@ class Stats:
         #         s += f"{attr}: {value} "
         # return s
 
-    def update(self, profit, win_trades, loss_trades, settings):
+    def update(self, profit, win_trades, loss_trades, settings: Settings):
         result = [self.symbol, self.date, f"{profit:.2f}", win_trades, loss_trades, str(settings.get_changed_settings())]
         self.results.append(result)
         self.iterations += 1
@@ -126,8 +126,8 @@ def simulate(df: pd.DataFrame, settings: Settings):
     # lc = LorentzianSpaceDistanceIndictor(df, settings)
     # lc_df = lc.lsd()
 
-    lc = Lorentzian({'settings': settings}, df)
-    signal, _ = lc.process()
+    lc = Lorentzian({'settings': settings})
+    signal, _ = lc.process(df)
     lc_df = lc.df
 
     lc_df['shifted_open'] = lc_df['open'].shift(-1)

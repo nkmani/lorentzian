@@ -7,8 +7,8 @@ import json
 from enum import IntEnum
 from typing import Tuple
 
-from common import *
-from Types import Ohlcv
+from common.functions import *
+from common.types import Ohlcv
 import numpy as np
 
 
@@ -236,7 +236,7 @@ class Datafeed(metaclass=ABCMeta):
             time.sleep(self.wait_period/1000)
             wait += self.wait_period
 
-        logging.debug(f"Timed out waiting next record - seq={self.seq}")
+        logging.debug(f"[{self.__class__}] Timed out waiting next record - seq={self.seq}")
         return None
 
     def write_header(self, file):

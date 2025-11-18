@@ -1,14 +1,12 @@
-import pytz
 import pandas as pd
-from pandas import Series
-from constants import *
+from common.constants import *
 
 import logging
 import traceback
 
 from datafeed.datafeed import Datafeed, create_datafeed
 from indicators.indicator import Indicator
-from common import setup_data_shm_and_lock, setup_signal_shm_and_lock, is_windows, mmap_write, shm_write_data
+from common.functions import setup_data_shm_and_lock, setup_signal_shm_and_lock, is_windows, mmap_write, shm_write_data
 from indicators.lorentzian import Lorentzian
 
 
@@ -79,8 +77,8 @@ class Signaling:
         if not self.flags & DF_INDICATORS_LOADED:
             try:
                 lorentzian_config = self.config_study['indicators']['LORENTZIAN']
-                self.indicator = Lorentzian(lorentzian_config, self.df)
-                signal, elapsed = self.indicator.run()
+                self.indicator = Lorentzian(lorentzian_config)
+                signal, elapsed = self.indicator.run(self.df)
                 self.logger.info(f"Signaling - ran {self.indicator.name} on initial data signal: {signal} elapsed: {elapsed}")
                 self.flags |= DF_INDICATORS_LOADED
             except Exception as e:
@@ -134,7 +132,7 @@ class Signaling:
                     dt = pd.to_datetime(rec.ts_event, utc=True)
 
                 self.df.loc[dt] = rec.to_dict()
-                signal, elapsed = self.indicator.run()
+                signal, elapsed = self.indicator.run(self.df)
 
                 self.send_signal(signal_seq, signal)
                 signal_seq += 1

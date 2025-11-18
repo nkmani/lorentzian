@@ -1,4 +1,3 @@
-import multiprocessing as mp
 import threading
 import time
 
@@ -9,19 +8,19 @@ current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.dirname(current_dir)
 sys.path.insert(0, parent_dir)
 
-from common import *
+from common.functions import *
 from signaling.signaling import Signaling
 
 
 def study_signal_thread(config, study):
     start = config['session']['start']
     end = config['session']['end']
-    getLogger().info(f"Signaling started for study {study}...Start: {start} End: {end}")
+    get_logger().info("Signaling started for study %s ...Start: %s End: %s", study, start, end)
 
     load_study(config, study)
 
     signaling = Signaling(config, study)
-    getLogger().info(f"Running signaling Study: {study} Start: {start} End: {end} with {signaling.init_msg}")
+    get_logger().info("Running signaling Study: %s Start: %s End: %s with %s", study, start, end, signaling.init_msg)
 
     # initialize data, signal channels
     while not signaling.ready_for_streaming():
@@ -35,9 +34,9 @@ def study_signal_thread(config, study):
 def run_services(config: dict, start, end):
     threads = []
 
-    logger = getLogger()
+    logger = get_logger()
 
-    logger.info(f"Starting signalling thread(s)")
+    logger.info("Starting signalling thread(s)")
 
     study = config['signal']['study']['name']
     thread = threading.Thread(target=study_signal_thread, name=f"signal-{study}", args=(config, study))
@@ -53,12 +52,17 @@ def run_services(config: dict, start, end):
 
 
 def main():
+    """
+    Start up the signaling function in a thread
+
+    :return: Does not return. Will return when the session ends.
+    """
     config = get_config("signaling")
 
-    logger = logging.getLogger()
+    logger = get_logger()
 
     threads = []
-    logger.info(f"Starting signalling thread(s)")
+    logger.info("Starting signalling thread(s)")
 
     study = config['signal']['study']['name']
     thread = threading.Thread(target=study_signal_thread, name=f"signal-{study}", args=(config, study))

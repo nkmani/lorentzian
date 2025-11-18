@@ -21,10 +21,6 @@ class Indicator(Protocol):
     df: pd.DataFrame
     last_action: str = ""
 
-    def __init__(self, config: dict, df: pd.DataFrame):
-        self.config = config
-        self.df = df
-
     def _is_indicator_enabled(self, indicator_name: str) -> bool:
         indicator_data = self.config.get('indicators', {}).get(indicator_name, {})
         return indicator_data.get('enabled') == 1
@@ -175,10 +171,10 @@ class Indicator(Protocol):
         df_ni = df_ni.query(q)
         return df_ni
 
-    def get_column(self, column: str):
+    def get_column(self, column: str, default=None):
         if column in self.df.columns:
             return self.df[column].tail(1).values[0]
-        return None
+        return default
 
     def internals(self) -> str:
         val = self.df.tail(1)
@@ -191,8 +187,8 @@ class Indicator(Protocol):
             #     d[col] = bool(d[col])
         return json.dumps(d, cls=NpEncoder)
 
-    def run(self) -> Tuple[Signal, float]:
-        _signal, _elapsed = self.process()
+    def run(self, df) -> Tuple[Signal, float]:
+        _signal, _elapsed = self.process(df)
 
         # calculate the indicators and append to signal
         for _indicator in self.config.get('indicators', {}).keys():
@@ -202,7 +198,7 @@ class Indicator(Protocol):
         return _signal, _elapsed
 
     @abstractmethod
-    def process(self) -> Tuple[Signal, float]:
+    def process(self, df) -> Tuple[Signal, float]:
         pass
 
     @abstractmethod

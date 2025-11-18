@@ -2,6 +2,8 @@ import logging
 
 from typing import Tuple
 
+import pandas as pd
+
 from common.types import Signal
 from indicators.indicator import Indicator
 
@@ -13,11 +15,11 @@ import time
 
 
 class Lorentzian(Indicator):
-    def __init__(self, config: dict, df: pd.DataFrame):
-        super().__init__(config, df)
+    def __init__(self, config: dict):
+        super().__init__(config)
         self.name = "Lorentzian"
         self.settings = config['settings']
-        self.settings.init(df)
+        self.df = pd.DataFrame()
 
     def action(self) -> str:
         action = "none"
@@ -51,7 +53,9 @@ class Lorentzian(Indicator):
         except Exception as e:
             print(f"Error dumping data - {e}")
 
-    def process(self) -> Tuple[Signal, float]:
+    def process(self, df) -> Tuple[Signal, float]:
+        self.df = df
+        self.settings.init(df)
         start = time.time_ns()
         self.df['predictions'] = get_lorentzian_predictions(self.settings)
         elapsed_time = time.time_ns() - start
@@ -61,8 +65,8 @@ class Lorentzian(Indicator):
         indicator_data = {
             "estimate1": float(self.get_column('yhat1')),
             "estimate2": float(self.get_column('yhat2')),
-            "signal": self.get_column('signal'),
-            "prediction": self.get_column('prediction'),
+            "signal": 0, # self.get_column('signal', 0),
+            "prediction": self.get_column('predictions', 0),
         }
 
         # study, symbol, schema is often set by the calling context (e.g., a strategy runner)
