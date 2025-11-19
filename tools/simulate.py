@@ -9,7 +9,7 @@ import threading
 import queue
 
 import pandas as pd
-from classifier.settings import *
+from classifier.setting import *
 
 # current_dir = os.path.dirname(os.path.abspath(__file__))
 # parent_dir = os.path.dirname(current_dir)
@@ -133,6 +133,13 @@ def simulate(df: pd.DataFrame, settings: Settings):
     signal, _ = lc.process(df)
     lc_df = lc.df
 
+    buy_or_sell = lc_df[(lc_df['start_long_trade'].notna() | lc_df['start_short_trade'].notna())]
+    if len(buy_or_sell) == 0:
+        logger.info(f"No buy or sell trades in the dataset to simulate trading")
+        return 0.0, 0, 0
+
+    logger.info(f"No of Buy or sell trades: {len(buy_or_sell)}")
+
     lc_df['shifted_open'] = lc_df['open'].shift(-1)
 
     position = 0
@@ -154,7 +161,7 @@ def simulate(df: pd.DataFrame, settings: Settings):
 
     logger.info(f"iteration: {settings.iteration} settings: {settings.get_changed_settings()}")
 
-    start_time, end_time = get_session_times_from_date(str(df.index[0].date()))
+    start_time, end_time = get_session_times_from_date(str(df.index[-1].date()))
     start_time_ts = start_time.value
     end_time_ts = end_time.value
 
@@ -240,8 +247,7 @@ def worker(q):
             df = item["df"]
             settings = item["settings"]
             stats = item["stats"]
-            msg = f"{len(df)} records with {settings.get_changed_settings()}"
-            logger.info(f"Processing: {msg} by thread {threading.current_thread().name}" )
+            logger.info(f"Processing: {len(df)} records with {settings.get_changed_settings()} by thread {threading.current_thread().name}" )
             profit, win_trades, loss_trades = simulate(df, settings)
             stats.update(profit, win_trades, loss_trades, settings)
         finally:
@@ -253,7 +259,7 @@ def grid_search_optimal_settings(symbol: str, data_file: str, config_file: str, 
         logger.warning(f"Not enough data found for {data_file} - length: {len(df)}")
         return None
 
-    date = str(df.index[0].date())
+    date = str(df.index[-1].date())
 
     settings_iterator = SettingsIterator(config_file)
 
@@ -337,4 +343,6 @@ if __name__ == '__main__':
     parser.add_argument("-v", "--verbose", help="verbose output", action="store_true", default=False)
     parser.add_argument("-c", "--config-file", help="config file", type=str)
     parser.add_argument("-t", "--thread-count", help="no of threads", type=int, default=1)
+    parser.add_argument("--session-start", help="session start time", type=str, default="13:30")
+    parser.add_argument("--session-end", help="session end time", type=str, default="20:00")
     run(parser.parse_args())

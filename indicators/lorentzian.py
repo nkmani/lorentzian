@@ -7,7 +7,7 @@ import pandas as pd
 from common.types import Signal
 from indicators.indicator import Indicator
 
-from classifier.settings import *
+from classifier.setting import *
 from classifier.distance import get_lorentzian_predictions
 from classifier.signal import generate_signals
 
@@ -25,11 +25,11 @@ class Lorentzian(Indicator):
         action = "none"
         if pd.notna(self.get_column('start_long_trade')):
             action = "long"
-        if pd.notna(self.get_column('start_long_trade')):
+        if pd.notna(self.get_column('start_short_trade')):
             action = "short"
-        if 'end_long_trade' in self.df.columns and 'end_short_trade' in self.df.columns:
-            if pd.notna(self.get_column('end_long_trade')) or pd.notna(self.get_column('end_short_trade')):
-                action = "flat"
+        if ('end_long_trade' in self.df.columns and pd.notna(self.get_column('end_long_trade')) or
+                ('end_short_trade' in self.df.columns and pd.notna(self.get_column('end_short_trade')))):
+            action = "flat"
         self.last_action = action
         return action
 

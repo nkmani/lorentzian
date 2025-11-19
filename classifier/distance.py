@@ -2,7 +2,7 @@ from abc import abstractmethod, ABCMeta
 
 import numpy as np
 import math
-from .settings import Settings, Direction
+from .setting import Settings, Direction
 from common.constants import *
 
 

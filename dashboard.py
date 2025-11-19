@@ -1,5 +1,5 @@
 from classifier.lsd import *
-from classifier.settings import *
+from classifier.setting import *
 import argparse
 import glob
 import os

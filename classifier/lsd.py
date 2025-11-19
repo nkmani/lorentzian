@@ -2,7 +2,7 @@ from datetime import time
 import time as timer
 import logging
 
-from classifier.settings import *
+from classifier.setting import *
 from classifier.distance import get_lorentzian_predictions
 from classifier.signal import generate_signals
 

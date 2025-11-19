@@ -9,7 +9,7 @@ import pandas as pd
 from datetime import datetime, timezone, timedelta
 import logging
 import logging.handlers
-from classifier import settings
+from classifier import setting
 
 
 MAGIC = 0x59415453  # yats
@@ -36,7 +36,7 @@ def get_session_start_and_end_times() -> (pd.Timestamp, pd.Timestamp):
 
 def get_session_times_from_date(_date: str) -> (pd.Timestamp, pd.Timestamp):
     _d = pd.Timestamp(_date, tz=timezone.utc)
-    return _d.replace(hour=13, minute=30), _d.replace(hour=18, minute=0)
+    return _d.replace(hour=13, minute=30), _d.replace(hour=20, minute=0)
 
 
 def get_session_times_from_date_time(_date: str, _start_time: str, _end_time: str) -> (pd.Timestamp, pd.Timestamp):
@@ -315,6 +315,6 @@ def load_study(config: dict, study: str):
     if "LORENTZIAN" in indicators.keys():
         lorentzian = indicators["LORENTZIAN"]
         if os.path.exists(lorentzian["settings_file"]):
-            lorentzian["settings"] = settings.generate_settings(lorentzian["settings_file"])
+            lorentzian["settings"] = setting.generate_settings(lorentzian["settings_file"])
         else:
-            lorentzian["settings"] = settings.default_settings()
+            lorentzian["settings"] = setting.default_settings()

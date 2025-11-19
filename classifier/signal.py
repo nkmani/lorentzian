@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from ta.volatility import average_true_range as atr
 from ta.trend import cci, adx, ema_indicator as ema, sma_indicator as sma
-from .settings import Settings, Direction
+from .setting import Settings, Direction
 
 
 def bars_since(s: np.array):
